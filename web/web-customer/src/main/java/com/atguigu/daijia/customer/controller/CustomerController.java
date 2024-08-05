@@ -28,10 +28,13 @@ public class CustomerController {
 
     @Operation(summary = "获取客户登录信息")
     @GetMapping("/getCustomerLoginInfo")
+    @GuiguLogin
     public Result<CustomerLoginVo> getCustomerLoginInfo(@RequestHeader(value = "token") String token) {
-        CustomerLoginVo customerLoginVo = customerService.getCustomerLoginInfo(token);
+        Long customerId = AuthContextHolder.getUserId();
+        CustomerLoginVo customerLoginVo = customerService.getCustomerInfo(customerId);
         return Result.ok(customerLoginVo);
     }
+
     @Operation(summary = "更新用户微信手机号")
     @GuiguLogin
     @PostMapping("/updateWxPhone")

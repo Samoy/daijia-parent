@@ -59,6 +59,19 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public CustomerLoginVo getCustomerInfo(Long customerId) {
+        Result<CustomerLoginVo> customerLoginInfo = customerInfoFeignClient.getCustomerLoginInfo(customerId);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(customerLoginInfo.getCode())) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+        CustomerLoginVo data = customerLoginInfo.getData();
+        if (data == null) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+        return data;
+    }
+
+    @Override
     public Boolean updateWxPhoneNumber(UpdateWxPhoneForm updateWxPhoneForm) {
         Result<Boolean> booleanResult = customerInfoFeignClient.updateWxPhoneNumber(updateWxPhoneForm);
         return booleanResult.getData();

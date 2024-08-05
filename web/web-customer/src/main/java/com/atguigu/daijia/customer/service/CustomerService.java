@@ -8,7 +8,10 @@ public interface CustomerService {
 
     String login(String code);
 
+    @Deprecated
     CustomerLoginVo getCustomerLoginInfo(String token);
 
     Boolean updateWxPhoneNumber(UpdateWxPhoneForm updateWxPhoneForm);
+
+    CustomerLoginVo getCustomerInfo(Long customerId);
 }

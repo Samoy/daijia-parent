@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -49,7 +48,7 @@ public class GuiguLoginAspect {
         }
 
         //4 token不为空，查询redis
-        String customerId = (String) redisTemplate.opsForValue()
+        String customerId = redisTemplate.opsForValue()
                 .get(RedisConstant.USER_LOGIN_KEY_PREFIX + token);
 
         //5 查询redis对应用户id，把用户id放到ThreadLocal里面
