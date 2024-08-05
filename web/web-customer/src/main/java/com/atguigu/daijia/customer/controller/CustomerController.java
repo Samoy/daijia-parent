@@ -1,7 +1,10 @@
 package com.atguigu.daijia.customer.controller;
 
+import com.atguigu.daijia.common.login.GuiguLogin;
 import com.atguigu.daijia.common.result.Result;
+import com.atguigu.daijia.common.util.AuthContextHolder;
 import com.atguigu.daijia.customer.service.CustomerService;
+import com.atguigu.daijia.model.form.customer.UpdateWxPhoneForm;
 import com.atguigu.daijia.model.vo.customer.CustomerLoginVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +31,13 @@ public class CustomerController {
     public Result<CustomerLoginVo> getCustomerLoginInfo(@RequestHeader(value = "token") String token) {
         CustomerLoginVo customerLoginVo = customerService.getCustomerLoginInfo(token);
         return Result.ok(customerLoginVo);
+    }
+    @Operation(summary = "更新用户微信手机号")
+    @GuiguLogin
+    @PostMapping("/updateWxPhone")
+    public Result<Boolean> updateWxPhone(@RequestBody UpdateWxPhoneForm updateWxPhoneForm) {
+        updateWxPhoneForm.setCustomerId(AuthContextHolder.getUserId());
+        return Result.ok(customerService.updateWxPhoneNumber(updateWxPhoneForm));
     }
 }
 
