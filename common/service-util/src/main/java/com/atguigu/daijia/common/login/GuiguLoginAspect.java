@@ -48,12 +48,12 @@ public class GuiguLoginAspect {
         }
 
         //4 token不为空，查询redis
-        String customerId = redisTemplate.opsForValue()
+        String userId = redisTemplate.opsForValue()
                 .get(RedisConstant.USER_LOGIN_KEY_PREFIX + token);
 
         //5 查询redis对应用户id，把用户id放到ThreadLocal里面
-        if (StringUtils.hasText(customerId)) {
-            AuthContextHolder.setUserId(Long.parseLong(customerId));
+        if (StringUtils.hasText(userId)) {
+            AuthContextHolder.setUserId(Long.parseLong(userId));
         }
 
         //6 执行业务方法

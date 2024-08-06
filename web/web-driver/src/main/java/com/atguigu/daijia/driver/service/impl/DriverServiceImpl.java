@@ -6,8 +6,9 @@ import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
 import com.atguigu.daijia.driver.service.DriverService;
+import com.atguigu.daijia.model.vo.driver.DriverLoginVo;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -18,14 +19,11 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class DriverServiceImpl implements DriverService {
 
-    private final DriverInfoFeignClient driverInfoFeignClient;
-    private final RedisTemplate<String, String> redisTemplate;
+    @Resource
+    private DriverInfoFeignClient driverInfoFeignClient;
+    @Resource
+    private RedisTemplate<String, String> redisTemplate;
 
-    @Autowired
-    public DriverServiceImpl(DriverInfoFeignClient driverInfoFeignClient, RedisTemplate<String, String> redisTemplate) {
-        this.driverInfoFeignClient = driverInfoFeignClient;
-        this.redisTemplate = redisTemplate;
-    }
 
     @Override
     public String login(String code) {
@@ -35,8 +33,17 @@ public class DriverServiceImpl implements DriverService {
         }
         Long driverId = result.getData();
         String token = UUID.randomUUID().toString().replaceAll("-", "");
-        redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN_KEY_PREFIX + token, driverId.toString(),
+        redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN_KEY_PREFIX + token, driverId + "",
                 RedisConstant.USER_LOGIN_KEY_TIMEOUT, TimeUnit.SECONDS);
         return token;
+    }
+
+    @Override
+    public DriverLoginVo getDriverLoginInfo(Long driverId) {
+        Result<DriverLoginVo> result = driverInfoFeignClient.getDriverLoginInfo(driverId);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+        return result.getData();
     }
 }
