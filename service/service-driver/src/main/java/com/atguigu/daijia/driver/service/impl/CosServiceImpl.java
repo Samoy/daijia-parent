@@ -7,22 +7,16 @@ import com.atguigu.daijia.driver.service.CosService;
 import com.atguigu.daijia.model.vo.driver.CosUploadVo;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.messages.ObjectMetadata;
-import io.netty.util.CharsetUtil;
+import io.minio.*;
+import io.minio.http.Method;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -31,15 +25,19 @@ public class CosServiceImpl implements CosService {
     @Resource
     private TencentCloudProperties tencentCloudProperties;
 
+    private MinioClient getMinioClient() {
+        return MinioClient.builder()
+                .endpoint(tencentCloudProperties.getEndpointUrl())
+                .credentials(tencentCloudProperties.getAccessKey(), tencentCloudProperties.getSecretKey())
+                .build();
+    }
+
     @Override
     public CosUploadVo upload(MultipartFile file, String path) {
         String uploadPath = "";
         try {
             // 创建一个Minio的客户端对象
-            MinioClient minioClient = MinioClient.builder()
-                    .endpoint(tencentCloudProperties.getEndpointUrl())
-                    .credentials(tencentCloudProperties.getAccessKey(), tencentCloudProperties.getSecretKey())
-                    .build();
+            MinioClient minioClient = getMinioClient();
 
             // 判断桶是否存在
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder()
@@ -73,7 +71,25 @@ public class CosServiceImpl implements CosService {
         }
         CosUploadVo cosUploadVo = new CosUploadVo();
         cosUploadVo.setUrl(uploadPath);
-        cosUploadVo.setShowUrl("");
+        String imageUrl  = getImageUrl(uploadPath);
+        cosUploadVo.setShowUrl(imageUrl);
         return cosUploadVo;
+    }
+
+    @Override
+    public String getImageUrl(String path) {
+        MinioClient minioClient = getMinioClient();
+        try {
+            return minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .bucket(tencentCloudProperties.getBucketName())
+                            .method(Method.GET)
+                            .object(path)
+                            // 设置有效时间15分钟
+                            .expiry(15, TimeUnit.MINUTES)
+                            .build());
+        } catch (Exception e) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
     }
 }

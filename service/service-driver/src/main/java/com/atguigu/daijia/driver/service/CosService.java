@@ -7,4 +7,6 @@ public interface CosService {
 
 
     CosUploadVo upload(MultipartFile file, String path);
+
+    String getImageUrl(String path);
 }
