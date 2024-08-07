@@ -15,15 +15,4 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("file")
 public class FileController {
 
-    @Resource
-    private CosService cosService;
-
-    @Operation(summary = "上传")
-    @PostMapping("upload")
-    @GuiguLogin
-    public Result<CosUploadVo> upload(@RequestPart("file") MultipartFile file,
-                                      @RequestParam(name = "path", defaultValue = "auth") String path) {
-        return Result.ok(cosService.upload(file, path));
-    }
-
 }

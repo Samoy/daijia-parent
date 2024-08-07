@@ -5,6 +5,7 @@ import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.driver.client.OcrFeignClient;
 import com.atguigu.daijia.driver.service.OcrService;
+import com.atguigu.daijia.model.vo.driver.DriverLicenseOcrVo;
 import com.atguigu.daijia.model.vo.driver.IdCardOcrVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,15 @@ public class OcrServiceImpl implements OcrService {
     @Override
     public IdCardOcrVo idCardOcr(MultipartFile file) {
         Result<IdCardOcrVo> result = ocrFeignClient.idCardOcr(file);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+        return result.getData();
+    }
+
+    @Override
+    public DriverLicenseOcrVo driverLicenseOcr(MultipartFile file) {
+        Result<DriverLicenseOcrVo> result = ocrFeignClient.driverLicenseOcr(file);
         if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
             throw new GuiguException(ResultCodeEnum.DATA_ERROR);
         }
