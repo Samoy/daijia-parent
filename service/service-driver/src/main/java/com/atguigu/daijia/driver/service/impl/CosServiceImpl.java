@@ -2,7 +2,7 @@ package com.atguigu.daijia.driver.service.impl;
 
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
-import com.atguigu.daijia.driver.config.TencentCloudProperties;
+import com.atguigu.daijia.driver.config.MinioProperties;
 import com.atguigu.daijia.driver.service.CosService;
 import com.atguigu.daijia.model.vo.driver.CosUploadVo;
 import com.google.common.collect.HashMultimap;
@@ -23,12 +23,12 @@ import java.util.concurrent.TimeUnit;
 public class CosServiceImpl implements CosService {
 
     @Resource
-    private TencentCloudProperties tencentCloudProperties;
+    private MinioProperties minioProperties;
 
     private MinioClient getMinioClient() {
         return MinioClient.builder()
-                .endpoint(tencentCloudProperties.getEndpointUrl())
-                .credentials(tencentCloudProperties.getAccessKey(), tencentCloudProperties.getSecretKey())
+                .endpoint(minioProperties.getEndpointUrl())
+                .credentials(minioProperties.getAccessKey(), minioProperties.getSecretKey())
                 .build();
     }
 
@@ -41,9 +41,9 @@ public class CosServiceImpl implements CosService {
 
             // 判断桶是否存在
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder()
-                    .bucket(tencentCloudProperties.getBucketName()).build());
+                    .bucket(minioProperties.getBucketName()).build());
             if (!found) {       // 如果不存在，那么此时就创建一个新的桶
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(tencentCloudProperties.getBucketName()).build());
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(minioProperties.getBucketName()).build());
             }
 
             // 设置元数据
@@ -58,7 +58,7 @@ public class CosServiceImpl implements CosService {
                 uploadPath = "/driver/" + path + "/"
                         + UUID.randomUUID().toString().replaceAll("-", "") + fileType;
                 PutObjectArgs args = PutObjectArgs.builder()
-                        .bucket(tencentCloudProperties.getBucketName())
+                        .bucket(minioProperties.getBucketName())
                         .object(uploadPath)
                         .userMetadata(meta)
                         .stream(file.getInputStream(), file.getSize(), -1)
@@ -82,7 +82,7 @@ public class CosServiceImpl implements CosService {
         try {
             return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
-                            .bucket(tencentCloudProperties.getBucketName())
+                            .bucket(minioProperties.getBucketName())
                             .method(Method.GET)
                             .object(path)
                             // 设置有效时间15分钟

@@ -6,17 +6,15 @@ import org.springframework.stereotype.Component;
 
 /**
  * TencentCloudProperties
- * 不想花钱，所以将所有腾讯云存储都换成了MinIO。
  *
  * @author Samoy
- * @date 2024/8/6
+ * @date 2024/8/7
  */
-@ConfigurationProperties(prefix = "minio")
 @Data
 @Component
+@ConfigurationProperties(prefix = "tencent.cloud")
 public class TencentCloudProperties {
-    private String endpointUrl;
-    private String accessKey;
+    private String secretId;
     private String secretKey;
-    private String bucketName;
+    private String region;
 }

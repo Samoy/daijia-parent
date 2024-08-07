@@ -20,7 +20,7 @@ public class FileController {
 
     @Operation(summary = "上传")
     @PostMapping("upload")
-    // @GuiguLogin
+    @GuiguLogin
     public Result<CosUploadVo> upload(@RequestPart("file") MultipartFile file,
                                       @RequestParam(name = "path", defaultValue = "auth") String path) {
         return Result.ok(cosService.upload(file, path));
