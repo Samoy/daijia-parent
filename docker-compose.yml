@@ -39,3 +39,16 @@ services:
       MODE: standalone
       PREFER_HOST_MODE: hostname
       SPRING_DATASOURCE_PLATFORM: derby
+  minio:
+    networks:
+      - my_network
+    image: bitnami/minio:2024
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      TZ: Asia/Shanghai
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+      MINIO_DEFAULT_BUCKETS: daijia
