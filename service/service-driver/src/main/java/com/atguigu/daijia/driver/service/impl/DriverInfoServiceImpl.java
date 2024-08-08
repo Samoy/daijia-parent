@@ -7,7 +7,6 @@ import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.model.FaceLibrary;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
-import com.atguigu.daijia.driver.config.TencentCloudProperties;
 import com.atguigu.daijia.driver.mapper.DriverAccountMapper;
 import com.atguigu.daijia.driver.mapper.DriverInfoMapper;
 import com.atguigu.daijia.driver.mapper.DriverLoginLogMapper;
@@ -50,8 +49,6 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
     private DriverLoginLogMapper driverLoginLogMapper;
     @Resource
     private CosService cosService;
-    @Resource
-    private TencentCloudProperties tencentCloudProperties;
 
     @Override
     public Long login(String code) {
