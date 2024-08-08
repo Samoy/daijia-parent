@@ -1,8 +1,7 @@
 package com.atguigu.daijia.common;
 
 import com.atguigu.daijia.common.model.AddFaceForm;
-import com.atguigu.daijia.common.model.FaceExample;
-import com.atguigu.daijia.common.model.Subject;
+import com.atguigu.daijia.common.model.FaceLibrary;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -15,40 +14,26 @@ import org.springframework.web.client.RestTemplate;
 public class FaceUtil {
 
     /**
-     * 创建Subject(人脸库)
-     *
-     * @return 人脸库名称，即某人姓名
-     */
-    public static Subject createSubject() {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("x-api-key", FaceConstant.FACE_RECOGNITION_API_KEY);
-        ResponseEntity<Subject> resp = restTemplate
-                .postForEntity(FaceConstant.FACE_RECOGNITION_END_POINT + "/subjects", headers, Subject.class);
-        if (resp.getStatusCode() != HttpStatus.OK) {
-            throw new RuntimeException("创建人脸库失败");
-        }
-        return resp.getBody();
-    }
-
-    /**
-     * 向人脸库中添加人脸照片
+     * 向人脸库中添加人脸照片，如果没有人脸库则会自动创建
      *
      * @param base64Image 图片base64编码
      * @param subjectId   人脸库id
      * @return 人脸id
      */
-    public static FaceExample addFace(String base64Image, String subjectId) {
+    public static FaceLibrary addFaceLibrary(String base64Image, String subjectId) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-api-key", FaceConstant.FACE_RECOGNITION_API_KEY);
-        HttpEntity<AddFaceForm> httpEntity = new HttpEntity<>(new AddFaceForm(base64Image), headers);
-        ResponseEntity<FaceExample> resp = restTemplate
+        AddFaceForm addFaceForm = new AddFaceForm();
+        // 分割base64的值，只拿base64编码部分
+        String[] base64ImageArray = base64Image.split(",");
+        addFaceForm.setFile(base64ImageArray[base64ImageArray.length - 1]);
+        HttpEntity<AddFaceForm> httpEntity = new HttpEntity<>(addFaceForm, headers);
+        ResponseEntity<FaceLibrary> resp = restTemplate
                 .postForEntity(FaceConstant.FACE_RECOGNITION_END_POINT
-                        + "/faces?subject=" + subjectId, httpEntity, FaceExample.class);
-        if (resp.getStatusCode() != HttpStatus.OK) {
+                        + "/faces?subject=" + subjectId, httpEntity, FaceLibrary.class);
+        if (resp.getStatusCode().isError()) {
             throw new RuntimeException("添加人脸失败");
         }
         return resp.getBody();

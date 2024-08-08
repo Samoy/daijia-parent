@@ -5,8 +5,7 @@ import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import com.atguigu.daijia.common.FaceUtil;
 import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
-import com.atguigu.daijia.common.model.FaceExample;
-import com.atguigu.daijia.common.model.Subject;
+import com.atguigu.daijia.common.model.FaceLibrary;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.driver.config.TencentCloudProperties;
 import com.atguigu.daijia.driver.mapper.DriverAccountMapper;
@@ -19,6 +18,7 @@ import com.atguigu.daijia.model.entity.driver.DriverAccount;
 import com.atguigu.daijia.model.entity.driver.DriverInfo;
 import com.atguigu.daijia.model.entity.driver.DriverLoginLog;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
+import com.atguigu.daijia.model.enums.AuthStatus;
 import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
 import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
@@ -108,12 +108,30 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         DriverInfo driverInfo = driverInfoMapper.selectById(driverId);
         DriverAuthInfoVo driverAuthInfoVo = new DriverAuthInfoVo();
         BeanUtils.copyProperties(driverInfo, driverAuthInfoVo);
-        driverAuthInfoVo.setIdcardBackShowUrl(cosService.getImageUrl(driverAuthInfoVo.getIdcardBackUrl()));
-        driverAuthInfoVo.setIdcardFrontShowUrl(cosService.getImageUrl(driverAuthInfoVo.getIdcardFrontUrl()));
-        driverAuthInfoVo.setIdcardHandShowUrl(cosService.getImageUrl(driverAuthInfoVo.getIdcardHandUrl()));
-        driverAuthInfoVo.setDriverLicenseFrontShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseFrontUrl()));
-        driverAuthInfoVo.setDriverLicenseBackShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseBackUrl()));
-        driverAuthInfoVo.setDriverLicenseHandShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseHandUrl()));
+        String idcardBackUrl = driverAuthInfoVo.getIdcardBackUrl();
+        String idcardFrontUrl = driverAuthInfoVo.getIdcardFrontUrl();
+        String idcardHandUrl = driverAuthInfoVo.getIdcardHandUrl();
+        String driverLicenseFrontUrl = driverAuthInfoVo.getDriverLicenseFrontUrl();
+        String driverLicenseBackUrl = driverAuthInfoVo.getDriverLicenseBackUrl();
+        String driverLicenseHandUrl = driverAuthInfoVo.getDriverLicenseHandUrl();
+        if (StringUtils.hasText(idcardBackUrl)) {
+            driverAuthInfoVo.setIdcardBackShowUrl(cosService.getImageUrl(idcardBackUrl));
+        }
+        if (StringUtils.hasText(idcardFrontUrl)) {
+            driverAuthInfoVo.setIdcardFrontShowUrl(cosService.getImageUrl(idcardFrontUrl));
+        }
+        if (StringUtils.hasText(idcardHandUrl)) {
+            driverAuthInfoVo.setIdcardHandShowUrl(cosService.getImageUrl(idcardHandUrl));
+        }
+        if (StringUtils.hasText(driverLicenseFrontUrl)) {
+            driverAuthInfoVo.setDriverLicenseFrontShowUrl(cosService.getImageUrl(driverLicenseFrontUrl));
+        }
+        if (StringUtils.hasText(driverLicenseBackUrl)) {
+            driverAuthInfoVo.setDriverLicenseBackShowUrl(cosService.getImageUrl(driverLicenseBackUrl));
+        }
+        if (StringUtils.hasText(driverLicenseHandUrl)) {
+            driverAuthInfoVo.setDriverLicenseHandShowUrl(cosService.getImageUrl(driverLicenseHandUrl));
+        }
         return driverAuthInfoVo;
     }
 
@@ -123,6 +141,8 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         DriverInfo driverInfo = new DriverInfo();
         driverInfo.setId(driverId);
         BeanUtils.copyProperties(updateDriverAuthInfoForm, driverInfo);
+        // 更新司机认证信息，状态应该是审核中
+        driverInfo.setAuthStatus(AuthStatus.AUTH_AUDITING.getStatus());
         return this.updateById(driverInfo);
     }
 
@@ -131,9 +151,7 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         //根据司机id获取司机信息
         DriverInfo driverInfo =
                 driverInfoMapper.selectById(driverFaceModelForm.getDriverId());
-        Subject subject = FaceUtil.createSubject();
-        subject.setSubject(driverInfo.getName());
-        FaceExample face = FaceUtil.addFace(driverFaceModelForm.getImageBase64(), subject.getSubject());
+        FaceLibrary face = FaceUtil.addFaceLibrary(driverFaceModelForm.getImageBase64(), driverInfo.getName());
         if (face != null) {
             driverInfo.setFaceModelId(face.getImage_id());
             return this.updateById(driverInfo);

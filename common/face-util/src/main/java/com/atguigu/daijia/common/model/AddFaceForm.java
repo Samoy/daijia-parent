@@ -10,7 +10,6 @@ import lombok.Data;
  * @date 2024/8/7
  */
 @Data
-@AllArgsConstructor
 public class AddFaceForm {
     private String file;
 }

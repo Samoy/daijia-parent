@@ -9,7 +9,7 @@ import lombok.Data;
  * @date 2024/8/7
  */
 @Data
-public class FaceExample {
+public class FaceLibrary {
     private String image_id;
     private String subject;
 }
