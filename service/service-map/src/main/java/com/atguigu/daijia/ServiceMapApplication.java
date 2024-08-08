@@ -17,8 +17,4 @@ public class ServiceMapApplication {
         SpringApplication.run(ServiceMapApplication.class, args);
     }
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
 }

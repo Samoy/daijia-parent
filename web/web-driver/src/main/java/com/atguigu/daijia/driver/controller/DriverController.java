@@ -46,7 +46,7 @@ public class DriverController {
 
     @Operation(summary = "更新司机认证信息")
     @GuiguLogin
-    @RequestMapping("/updateDriverAuthInfo")
+    @PostMapping("/updateDriverAuthInfo")
     public Result<Boolean> updateDriverAuthInfo(@RequestBody UpdateDriverAuthInfoForm updateDriverAuthInfoForm) {
         updateDriverAuthInfoForm.setDriverId(AuthContextHolder.getUserId());
         return Result.ok(driverService.updateDriverAuthInfo(updateDriverAuthInfoForm));
