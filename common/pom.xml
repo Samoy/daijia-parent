@@ -17,6 +17,7 @@
         <module>rabbit-util</module>
         <module>spring-security</module>
         <module>common-log</module>
+        <module>face-util</module>
     </modules>
 
 </project>

@@ -2,18 +2,26 @@ package com.atguigu.daijia.driver.service.impl;
 
 import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
+import com.atguigu.daijia.common.FaceUtil;
 import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
+import com.atguigu.daijia.common.model.FaceExample;
+import com.atguigu.daijia.common.model.Subject;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
+import com.atguigu.daijia.driver.config.TencentCloudProperties;
 import com.atguigu.daijia.driver.mapper.DriverAccountMapper;
 import com.atguigu.daijia.driver.mapper.DriverInfoMapper;
 import com.atguigu.daijia.driver.mapper.DriverLoginLogMapper;
 import com.atguigu.daijia.driver.mapper.DriverSetMapper;
+import com.atguigu.daijia.driver.service.CosService;
 import com.atguigu.daijia.driver.service.DriverInfoService;
 import com.atguigu.daijia.model.entity.driver.DriverAccount;
 import com.atguigu.daijia.model.entity.driver.DriverInfo;
 import com.atguigu.daijia.model.entity.driver.DriverLoginLog;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
+import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
+import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
+import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.atguigu.daijia.model.vo.driver.DriverLoginVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -40,6 +48,10 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
     private DriverAccountMapper driverAccountMapper;
     @Resource
     private DriverLoginLogMapper driverLoginLogMapper;
+    @Resource
+    private CosService cosService;
+    @Resource
+    private TencentCloudProperties tencentCloudProperties;
 
     @Override
     public Long login(String code) {
@@ -89,5 +101,43 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         boolean isArchiveFace = StringUtils.hasText(faceModelId);
         driverLoginVo.setIsArchiveFace(isArchiveFace);
         return driverLoginVo;
+    }
+
+    @Override
+    public DriverAuthInfoVo getDriverAuthInfo(Long driverId) {
+        DriverInfo driverInfo = driverInfoMapper.selectById(driverId);
+        DriverAuthInfoVo driverAuthInfoVo = new DriverAuthInfoVo();
+        BeanUtils.copyProperties(driverInfo, driverAuthInfoVo);
+        driverAuthInfoVo.setIdcardBackShowUrl(cosService.getImageUrl(driverAuthInfoVo.getIdcardBackUrl()));
+        driverAuthInfoVo.setIdcardFrontShowUrl(cosService.getImageUrl(driverAuthInfoVo.getIdcardFrontUrl()));
+        driverAuthInfoVo.setIdcardHandShowUrl(cosService.getImageUrl(driverAuthInfoVo.getIdcardHandUrl()));
+        driverAuthInfoVo.setDriverLicenseFrontShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseFrontUrl()));
+        driverAuthInfoVo.setDriverLicenseBackShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseBackUrl()));
+        driverAuthInfoVo.setDriverLicenseHandShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseHandUrl()));
+        return driverAuthInfoVo;
+    }
+
+    @Override
+    public Boolean updateDriverAuthInfo(UpdateDriverAuthInfoForm updateDriverAuthInfoForm) {
+        Long driverId = updateDriverAuthInfoForm.getDriverId();
+        DriverInfo driverInfo = new DriverInfo();
+        driverInfo.setId(driverId);
+        BeanUtils.copyProperties(updateDriverAuthInfoForm, driverInfo);
+        return this.updateById(driverInfo);
+    }
+
+    @Override
+    public Boolean creatDriverFaceModel(DriverFaceModelForm driverFaceModelForm) {
+        //根据司机id获取司机信息
+        DriverInfo driverInfo =
+                driverInfoMapper.selectById(driverFaceModelForm.getDriverId());
+        Subject subject = FaceUtil.createSubject();
+        subject.setSubject(driverInfo.getName());
+        FaceExample face = FaceUtil.addFace(driverFaceModelForm.getImageBase64(), subject.getSubject());
+        if (face != null) {
+            driverInfo.setFaceModelId(face.getImage_id());
+            return this.updateById(driverInfo);
+        }
+        return false;
     }
 }
