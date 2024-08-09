@@ -12,7 +12,6 @@ import com.atguigu.daijia.model.form.order.OrderInfoForm;
 import com.atguigu.daijia.model.form.rules.FeeRuleRequestForm;
 import com.atguigu.daijia.model.vo.customer.ExpectOrderVo;
 import com.atguigu.daijia.model.vo.map.DrivingLineVo;
-import com.atguigu.daijia.model.vo.rules.FeeRuleResponse;
 import com.atguigu.daijia.model.vo.rules.FeeRuleResponseVo;
 import com.atguigu.daijia.order.client.OrderInfoFeignClient;
 import com.atguigu.daijia.rules.client.FeeRuleFeignClient;
@@ -21,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
 
 @Slf4j
 @Service
@@ -96,6 +93,15 @@ public class OrderServiceImpl implements OrderService {
         // TODO: 查询附近可以接单的司机
 
         Result<Long> result = orderInfoFeignClient.saveOrderInfo(orderInfoForm);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+        return result.getData();
+    }
+
+    @Override
+    public Integer getOrderStatus(Long orderId) {
+        Result<Integer> result = orderInfoFeignClient.getOrderStatus(orderId);
         if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
             throw new GuiguException(ResultCodeEnum.DATA_ERROR);
         }
