@@ -2,6 +2,7 @@ package com.atguigu.daijia.driver.controller;
 
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.driver.service.DriverInfoService;
+import com.atguigu.daijia.model.entity.driver.DriverSet;
 import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
 import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
@@ -11,6 +12,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @Tag(name = "司机API接口管理")
@@ -49,5 +52,18 @@ public class DriverInfoController {
     public Result<Boolean> creatDriverFaceModel(@RequestBody DriverFaceModelForm driverFaceModelForm) {
         return Result.ok(driverInfoService.creatDriverFaceModel(driverFaceModelForm));
     }
+
+    @Operation(summary = "获取司机设置信息")
+    @GetMapping("/getDriverSet/{driverId}")
+    public Result<DriverSet> getDriverSettingInfo(@PathVariable Long driverId) {
+        return Result.ok(driverInfoService.getDriverSet(driverId));
+    }
+
+    @Operation(summary = "批量查询司机设置信息")
+    @GetMapping("/getDriverSetBatch/{driverIdList}")
+    public Result<List<DriverSet>> getDriverSettingInfoBatch(@PathVariable String driverIdList) {
+        return Result.ok(driverInfoService.getDriverSetBatch(driverIdList));
+    }
+
 }
 

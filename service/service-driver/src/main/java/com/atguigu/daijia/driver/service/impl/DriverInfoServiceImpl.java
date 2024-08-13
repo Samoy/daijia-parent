@@ -32,6 +32,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -154,5 +156,18 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
             return this.updateById(driverInfo);
         }
         return false;
+    }
+
+    @Override
+    public DriverSet getDriverSet(Long driverId) {
+        return driverSetMapper.selectOne(new LambdaQueryWrapper<DriverSet>().eq(DriverSet::getDriverId, driverId));
+    }
+
+    @Override
+    public List<DriverSet> getDriverSetBatch(String driverIdList) {
+        LambdaQueryWrapper<DriverSet> wrapper = new LambdaQueryWrapper<>();
+        List<Long> driverIds = Arrays.stream(driverIdList.split(",")).map(Long::parseLong).toList();
+        wrapper.in(DriverSet::getDriverId, driverIds);
+        return driverSetMapper.selectList(wrapper);
     }
 }

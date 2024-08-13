@@ -1,6 +1,7 @@
 package com.atguigu.daijia.driver.client;
 
 import com.atguigu.daijia.common.result.Result;
+import com.atguigu.daijia.model.entity.driver.DriverSet;
 import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
 import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
@@ -10,6 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 @FeignClient(value = "service-driver")
 public interface DriverInfoFeignClient {
@@ -58,5 +61,24 @@ public interface DriverInfoFeignClient {
      */
     @PostMapping("/driver/info/creatDriverFaceModel")
     Result<Boolean> creatDriverFaceModel(@RequestBody DriverFaceModelForm driverFaceModelForm);
+
+
+    /**
+     * 获取司机设置信息
+     *
+     * @param driverId 司机id
+     * @return 司机设置信息
+     */
+    @GetMapping("/driver/info/getDriverSet/{driverId}")
+    Result<DriverSet> getDriverSet(@PathVariable("driverId") Long driverId);
+
+    /**
+     * 批量查询司机设置信息
+     *
+     * @param driverIdList 司机id列表，用英文逗号隔开
+     * @return 司机设置信息列表
+     */
+    @GetMapping("/driver/info/getDriverSetBatch/{driverIdList}")
+    Result<List<DriverSet>> getDriverSetBatch(@PathVariable("driverIdList") String driverIdList);
 
 }

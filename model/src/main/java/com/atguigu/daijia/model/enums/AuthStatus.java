@@ -1,8 +1,6 @@
 package com.atguigu.daijia.model.enums;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  * AuthStatus
@@ -10,7 +8,7 @@ import lombok.Setter;
  * @author Samoy
  * @date 2024/8/8
  */
-
+@Getter
 public enum AuthStatus {
 
     WAITING_AUTH(0, "未认证"),
@@ -19,13 +17,8 @@ public enum AuthStatus {
     AUTH_FAIL(-1, "认证不通过"),
     ;
 
-    @EnumValue
-    @Getter
-    @Setter
-    private Integer status;
-    @Getter
-    @Setter
-    private String comment;
+    private final Integer status;
+    private final String comment;
 
     AuthStatus(Integer status, String comment) {
         this.status = status;
