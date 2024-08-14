@@ -35,7 +35,7 @@ public class LocationController {
     }
 
     @Operation(summary = "搜索附近满足条件的司机")
-    @GetMapping("/searchNearByDriver")
+    @PostMapping("/searchNearByDriver")
     public Result<List<NearByDriverVo>> searchNearByDriver(@RequestBody SearchNearByDriverForm searchNearByDriverForm) {
         return Result.ok(locationService.searchNearByDriver(searchNearByDriverForm));
     }
