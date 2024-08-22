@@ -25,12 +25,6 @@
             <groupId>com.tencentcloudapi</groupId>
             <artifactId>tencentcloud-sdk-java</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.atguigu.daijia</groupId>
-            <artifactId>face-util</artifactId>
-            <version>1.0</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>

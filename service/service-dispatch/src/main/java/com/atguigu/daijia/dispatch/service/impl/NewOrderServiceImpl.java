@@ -45,19 +45,26 @@ public class NewOrderServiceImpl implements NewOrderService {
 
     @Override
     public Long addAndStartTask(NewOrderTaskVo newOrderTaskVo) {
+        //1 判断当前订单是否启动任务调度
+        //根据订单id查询
         LambdaQueryWrapper<OrderJob> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(OrderJob::getOrderId, newOrderTaskVo.getOrderId());
         OrderJob orderJob = orderJobMapper.selectOne(wrapper);
+        log.info("当前是否查询到任务:{}", orderJob);
+        //2 没有启动，进行操作
         if (orderJob == null) {
-            Long jobId = xxlJobClient.addJob("newOrderTaskHandler", "", "0 */1 * * * ?",
-                    "新创建订单任务调度:" + newOrderTaskVo.getOrderId());
+            Long jobId = xxlJobClient.addAndStart("newOrderTaskHandler", "",
+                    "0 0/1 * * * ?",
+                    "新创建订单任务调度：" + newOrderTaskVo.getOrderId());
+
+            //记录任务调度信息
             orderJob = new OrderJob();
             orderJob.setOrderId(newOrderTaskVo.getOrderId());
             orderJob.setJobId(jobId);
             orderJob.setParameter(JSONObject.toJSONString(newOrderTaskVo));
             orderJobMapper.insert(orderJob);
         }
-        return orderJob.getId();
+        return orderJob.getJobId();
     }
 
     @Override
@@ -86,9 +93,9 @@ public class NewOrderServiceImpl implements NewOrderService {
         // 获取订单状态
         Integer orderStatus = orderStatusResult.getData();
 
-        // 如果订单状态不是已接受，则重新执行任务并返回
-        if (!Objects.equals(orderStatus, OrderStatus.ACCEPTED.getStatus())) {
-            xxlJobClient.startJob(jobId);
+        // 如果订单状态不是等待接单，则停止执行任务
+        if (!Objects.equals(orderStatus, OrderStatus.WAITING_ACCEPT.getStatus())) {
+            xxlJobClient.stopJob(jobId);
             return;
         }
 

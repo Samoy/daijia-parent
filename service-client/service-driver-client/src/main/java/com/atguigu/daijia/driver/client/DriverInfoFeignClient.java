@@ -7,10 +7,7 @@ import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.atguigu.daijia.model.vo.driver.DriverLoginVo;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -78,7 +75,34 @@ public interface DriverInfoFeignClient {
      * @param driverIdList 司机id列表，用英文逗号隔开
      * @return 司机设置信息列表
      */
-    @GetMapping("/driver/info/getDriverSetBatch/{driverIdList}")
-    Result<List<DriverSet>> getDriverSetBatch(@PathVariable("driverIdList") String driverIdList);
+    @GetMapping("/driver/info/getDriverSetBatch")
+    Result<List<DriverSet>> getDriverSetBatch(@RequestParam String driverIdList);
 
+    /**
+     * 判断司机当日是否进行过人脸识别
+     *
+     * @param driverId 司机id
+     * @return 是否进行过人脸识别
+     */
+    @GetMapping("/driver/info/isFaceRecognition/{driverId}")
+    Result<Boolean> isFaceRecognition(@PathVariable("driverId") Long driverId);
+
+    /**
+     * 验证司机人脸
+     *
+     * @param driverFaceModelForm 人脸模型表单
+     * @return 是否验证成功
+     */
+    @PostMapping("/driver/info/verifyDriverFace")
+    Result<Boolean> verifyDriverFace(@RequestBody DriverFaceModelForm driverFaceModelForm);
+
+    /**
+     * 更新接单状态
+     *
+     * @param driverId 司机id
+     * @param status   司机状态
+     * @return 是否更新成功
+     */
+    @GetMapping("/driver/info/updateServiceStatus/{driverId}/{status}")
+    Result<Boolean> updateServiceStatus(@PathVariable("driverId") Long driverId, @PathVariable("status") Integer status);
 }

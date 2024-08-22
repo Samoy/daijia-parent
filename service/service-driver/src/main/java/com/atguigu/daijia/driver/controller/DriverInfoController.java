@@ -31,8 +31,9 @@ public class DriverInfoController {
 
     @Operation(summary = "获取司机登录信息")
     @GetMapping("/getDriverLoginInfo/{driverId}")
-    public Result<DriverLoginVo> getDriverLoginInfo(@PathVariable Long driverId) {
-        return Result.ok(driverInfoService.getDriverLoginInfo(driverId));
+    public Result<DriverLoginVo> getDriverInfo(@PathVariable Long driverId) {
+        DriverLoginVo driverLoginVo = driverInfoService.getDriverLoginInfo(driverId);
+        return Result.ok(driverLoginVo);
     }
 
     @Operation(summary = "获取司机认证信息")
@@ -60,9 +61,28 @@ public class DriverInfoController {
     }
 
     @Operation(summary = "批量查询司机设置信息")
-    @GetMapping("/getDriverSetBatch/{driverIdList}")
-    public Result<List<DriverSet>> getDriverSettingInfoBatch(@PathVariable String driverIdList) {
+    @GetMapping("/getDriverSetBatch")
+    public Result<List<DriverSet>> getDriverSettingInfoBatch(@RequestParam String driverIdList) {
         return Result.ok(driverInfoService.getDriverSetBatch(driverIdList));
+    }
+
+    @Operation(summary = "判断司机当日是否进行过人脸识别")
+    @GetMapping("/isFaceRecognition/{driverId}")
+    public Result<Boolean> isFaceRecognition(@PathVariable Long driverId) {
+        return Result.ok(driverInfoService.isFaceRecognition(driverId));
+    }
+
+    @Operation(summary = "验证司机人脸")
+    @PostMapping("/verifyDriverFace")
+    public Result<Boolean> verifyDriverFace(@RequestBody DriverFaceModelForm driverFaceModelForm) {
+        return Result.ok(driverInfoService.verifyDriverFace(driverFaceModelForm));
+    }
+
+    //更新接单状态
+    @Operation(summary = "更新接单状态")
+    @GetMapping("/updateServiceStatus/{driverId}/{status}")
+    public Result<Boolean> updateServiceStatus(@PathVariable Long driverId, @PathVariable Integer status) {
+        return Result.ok(driverInfoService.updateServiceStatus(driverId, status));
     }
 
 }

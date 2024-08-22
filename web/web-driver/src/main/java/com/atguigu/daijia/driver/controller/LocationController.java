@@ -30,11 +30,11 @@ public class LocationController {
     }
 
 
-    @Operation(summary = "关闭接单服务：删除司机经纬度信息")
-    @GuiguLogin
-    @DeleteMapping(value = "/removeDriverLocation/{driverId}")
-    public Boolean removeDriverLocation(@PathVariable Long driverId) {
-        return locationService.removeDriverLocation(driverId);
+    //司机关闭接单，删除司机位置信息
+    @Operation(summary = "关闭接单服务：删除司机经纬度位置")
+    @DeleteMapping("/removeDriverLocation/{driverId}")
+    public Result<Boolean> removeDriverLocation(@PathVariable Long driverId) {
+        return Result.ok(locationService.removeDriverLocation(driverId));
     }
 
 }

@@ -1,5 +1,6 @@
 package com.atguigu.daijia.driver.service.impl;
 
+import com.atguigu.daijia.common.constant.RedisConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
@@ -11,6 +12,7 @@ import com.atguigu.daijia.model.enums.ServiceStatus;
 import com.atguigu.daijia.model.form.map.UpdateDriverLocationForm;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -22,6 +24,8 @@ public class LocationServiceImpl implements LocationService {
     private LocationFeignClient locationFeignClient;
     @Resource
     private DriverInfoFeignClient driverInfoFeignClient;
+    @Resource
+    private RedisTemplate<String, String> redisTemplate;
 
 
     @Override
@@ -45,6 +49,7 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public Boolean removeDriverLocation(Long driverId) {
-        return null;
+        redisTemplate.opsForGeo().remove(RedisConstant.DRIVER_GEO_LOCATION, driverId.toString());
+        return true;
     }
 }

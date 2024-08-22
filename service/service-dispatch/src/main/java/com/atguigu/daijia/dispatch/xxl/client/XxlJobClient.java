@@ -120,7 +120,7 @@ public class XxlJobClient {
         XxlJobInfo xxlJobInfo = new XxlJobInfo();
         xxlJobInfo.setJobGroup(xxlJobClientConfig.getJobGroupId());
         xxlJobInfo.setJobDesc(desc);
-        xxlJobInfo.setAuthor("qy");
+        xxlJobInfo.setAuthor("Samoy");
         xxlJobInfo.setScheduleType("CRON");
         xxlJobInfo.setScheduleConf(corn);
         xxlJobInfo.setGlueType("BEAN");
