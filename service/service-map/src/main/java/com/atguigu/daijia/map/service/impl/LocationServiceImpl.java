@@ -1,5 +1,6 @@
 package com.atguigu.daijia.map.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.atguigu.daijia.common.constant.RedisConstant;
 import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
@@ -10,7 +11,9 @@ import com.atguigu.daijia.map.service.LocationService;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
 import com.atguigu.daijia.model.form.map.SearchNearByDriverForm;
 import com.atguigu.daijia.model.form.map.UpdateDriverLocationForm;
+import com.atguigu.daijia.model.form.map.UpdateOrderLocationForm;
 import com.atguigu.daijia.model.vo.map.NearByDriverVo;
+import com.atguigu.daijia.model.vo.map.OrderLocationVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -109,6 +112,22 @@ public class LocationServiceImpl implements LocationService {
             list.add(nearByDriverVo);
         }
         return list;
+    }
+
+    @Override
+    public Boolean updateOrderLocationToCache(UpdateOrderLocationForm updateOrderLocationForm) {
+        OrderLocationVo orderLocationVo = new OrderLocationVo();
+        orderLocationVo.setLatitude(updateOrderLocationForm.getLatitude());
+        orderLocationVo.setLongitude(updateOrderLocationForm.getLongitude());
+        redisTemplate.opsForValue().set(RedisConstant.UPDATE_ORDER_LOCATION + updateOrderLocationForm.getOrderId(),
+                JSONObject.toJSONString(orderLocationVo));
+        return true;
+    }
+
+    @Override
+    public OrderLocationVo getCacheOrderLocation(Long orderId) {
+        return JSONObject.parseObject(redisTemplate.opsForValue().get(RedisConstant.UPDATE_ORDER_LOCATION + orderId),
+                OrderLocationVo.class);
     }
 
 }

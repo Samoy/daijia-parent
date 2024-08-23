@@ -1,14 +1,14 @@
 package com.atguigu.daijia.map.client;
 
 import com.atguigu.daijia.common.result.Result;
+import com.atguigu.daijia.model.form.map.OrderServiceLocationForm;
 import com.atguigu.daijia.model.form.map.SearchNearByDriverForm;
 import com.atguigu.daijia.model.form.map.UpdateDriverLocationForm;
+import com.atguigu.daijia.model.form.map.UpdateOrderLocationForm;
 import com.atguigu.daijia.model.vo.map.NearByDriverVo;
+import com.atguigu.daijia.model.vo.map.OrderLocationVo;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -43,5 +43,33 @@ public interface LocationFeignClient {
     @PostMapping("/map/location/searchNearByDriver")
     Result<List<NearByDriverVo>> searchNearByDriver(@RequestBody
                                                     SearchNearByDriverForm searchNearByDriverForm);
+
+    /**
+     * 司机赶往代驾起始点：更新订单地址到缓存
+     *
+     * @param updateOrderLocationForm 更新订单地址表单
+     * @return 是否更新成功
+     */
+    @PostMapping("/map/location/updateOrderLocationToCache")
+    Result<Boolean> updateOrderLocationToCache(@RequestBody UpdateOrderLocationForm updateOrderLocationForm);
+
+
+    /**
+     * 司机赶往代驾起始点：获取订单经纬度位置
+     *
+     * @param orderId 订单id
+     * @return 订单经纬度位置
+     */
+    @GetMapping("/map/location/getCacheOrderLocation/{orderId}")
+    Result<OrderLocationVo> getCacheOrderLocation(@PathVariable("orderId") Long orderId);
+
+    /**
+     * 开始代驾服务：保存代驾服务订单位置
+     *
+     * @param orderLocationServiceFormList 保存代驾服务订单位置表单
+     * @return 是否保存成功
+     */
+    @PostMapping("/map/location/saveOrderServiceLocation")
+    Result<Boolean> saveOrderServiceLocation(@RequestBody List<OrderServiceLocationForm> orderLocationServiceFormList);
 
 }

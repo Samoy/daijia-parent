@@ -9,11 +9,15 @@ import com.atguigu.daijia.driver.service.LocationService;
 import com.atguigu.daijia.map.client.LocationFeignClient;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
 import com.atguigu.daijia.model.enums.ServiceStatus;
+import com.atguigu.daijia.model.form.map.OrderServiceLocationForm;
 import com.atguigu.daijia.model.form.map.UpdateDriverLocationForm;
+import com.atguigu.daijia.model.form.map.UpdateOrderLocationForm;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -33,13 +37,13 @@ public class LocationServiceImpl implements LocationService {
         // 根据司机id获取司机个性化设置信息
         Result<DriverSet> driverSetResult = driverInfoFeignClient.getDriverSet(updateDriverLocationForm.getDriverId());
         if (!ResultCodeEnum.SUCCESS.getCode().equals(driverSetResult.getCode())) {
-            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
         }
         DriverSet driverSet = driverSetResult.getData();
         if (ServiceStatus.START_SERVICE.getStatus().equals(driverSet.getServiceStatus())) {
             Result<Boolean> result = locationFeignClient.updateDriverLocation(updateDriverLocationForm);
             if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
-                throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+                throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
             }
             return result.getData();
         } else {
@@ -48,8 +52,20 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public Boolean removeDriverLocation(Long driverId) {
-        redisTemplate.opsForGeo().remove(RedisConstant.DRIVER_GEO_LOCATION, driverId.toString());
-        return true;
+    public Boolean updateOrderLocationToCache(UpdateOrderLocationForm updateOrderLocationForm) {
+        Result<Boolean> updateResult = locationFeignClient.updateOrderLocationToCache(updateOrderLocationForm);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(updateResult.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        return updateResult.getData();
+    }
+
+    @Override
+    public Boolean saveOrderServiceLocation(List<OrderServiceLocationForm> orderLocationServiceFormList) {
+        Result<Boolean> result = locationFeignClient.saveOrderServiceLocation(orderLocationServiceFormList);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        return result.getData();
     }
 }
