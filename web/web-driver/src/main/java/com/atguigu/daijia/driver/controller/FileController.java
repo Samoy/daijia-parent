@@ -1,9 +1,7 @@
 package com.atguigu.daijia.driver.controller;
 
-import com.atguigu.daijia.common.login.GuiguLogin;
 import com.atguigu.daijia.common.result.Result;
-import com.atguigu.daijia.driver.service.CosService;
-import com.atguigu.daijia.model.vo.driver.CosUploadVo;
+import com.atguigu.daijia.driver.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -15,4 +13,14 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("file")
 public class FileController {
 
+
+    @Resource
+    private FileService fileService;
+
+    @Operation(summary = "上传")
+    @PostMapping("/upload")
+    public Result<String> upload(@RequestPart("file") MultipartFile file) {
+        String url = fileService.upload(file);
+        return Result.ok(url);
+    }
 }
