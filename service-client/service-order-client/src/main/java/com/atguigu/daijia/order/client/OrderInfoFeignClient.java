@@ -1,6 +1,7 @@
 package com.atguigu.daijia.order.client;
 
 import com.atguigu.daijia.model.entity.order.OrderInfo;
+import com.atguigu.daijia.model.form.order.StartDriveForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderCartForm;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -91,5 +92,15 @@ public interface OrderInfoFeignClient {
      */
     @PostMapping("/order/info//updateOrderCart")
     Result<Boolean> updateOrderCart(@RequestBody UpdateOrderCartForm updateOrderCartForm);
+
+
+    /**
+     * 开始代驾服务
+     *
+     * @param startDriveForm 开始服务表单
+     * @return 是否更新成功
+     */
+    @PostMapping("/order/info/startDrive")
+    Result<Boolean> startDrive(@RequestBody StartDriveForm startDriveForm);
 
 }

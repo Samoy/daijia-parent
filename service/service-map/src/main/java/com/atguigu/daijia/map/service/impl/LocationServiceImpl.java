@@ -7,20 +7,32 @@ import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
+import com.atguigu.daijia.map.repository.OrderServiceLocationRepository;
 import com.atguigu.daijia.map.service.LocationService;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
+import com.atguigu.daijia.model.entity.map.OrderServiceLocation;
+import com.atguigu.daijia.model.form.map.OrderServiceLocationForm;
 import com.atguigu.daijia.model.form.map.SearchNearByDriverForm;
 import com.atguigu.daijia.model.form.map.UpdateDriverLocationForm;
 import com.atguigu.daijia.model.form.map.UpdateOrderLocationForm;
 import com.atguigu.daijia.model.vo.map.NearByDriverVo;
 import com.atguigu.daijia.model.vo.map.OrderLocationVo;
+import com.atguigu.daijia.model.vo.map.OrderServiceLastLocationVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.types.ObjectId;
+import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.*;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,6 +49,12 @@ public class LocationServiceImpl implements LocationService {
 
     @Resource
     private DriverInfoFeignClient driverInfoFeignClient;
+
+    @Resource
+    private OrderServiceLocationRepository orderServiceLocationRepository;
+
+    @Resource
+    private MongoTemplate mongoTemplate;
 
     @Override
     public Boolean updateDriverLocation(UpdateDriverLocationForm updateDriverLocationForm) {
@@ -128,6 +146,33 @@ public class LocationServiceImpl implements LocationService {
     public OrderLocationVo getCacheOrderLocation(Long orderId) {
         return JSONObject.parseObject(redisTemplate.opsForValue().get(RedisConstant.UPDATE_ORDER_LOCATION + orderId),
                 OrderLocationVo.class);
+    }
+
+    @Override
+    public Boolean saveOrderServiceLocation(List<OrderServiceLocationForm> orderLocationServiceFormList) {
+        List<OrderServiceLocation> list = orderLocationServiceFormList.stream().map(orderServiceLocationForm -> {
+            OrderServiceLocation orderServiceLocation = new OrderServiceLocation();
+            BeanUtils.copyProperties(orderServiceLocationForm, orderServiceLocation);
+            orderServiceLocation.setId(ObjectId.get().toString());
+            orderServiceLocation.setCreateTime(new Date());
+            return orderServiceLocation;
+        }).toList();
+        return !CollectionUtils.isEmpty(orderServiceLocationRepository.saveAll(list));
+    }
+
+    @Override
+    public OrderServiceLastLocationVo getOrderServiceLastLocation(Long orderId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("orderId").is(orderId));
+        query.with(Sort.by(Sort.Order.desc("createTime")));
+        query.limit(1);
+        OrderServiceLocation orderServiceLocation =
+                mongoTemplate.findOne(query, OrderServiceLocation.class);
+        OrderServiceLastLocationVo orderServiceLastLocationVo = new OrderServiceLastLocationVo();
+        if (!ObjectUtils.isEmpty(orderServiceLocation)) {
+            BeanUtils.copyProperties(orderServiceLocation, orderServiceLastLocationVo);
+        }
+        return orderServiceLastLocationVo;
     }
 
 }

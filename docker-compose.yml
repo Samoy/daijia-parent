@@ -52,3 +52,10 @@ services:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
       MINIO_DEFAULT_BUCKETS: daijia
+  mongo:
+    networks:
+      - my_network
+    image: mongo:7.0.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
