@@ -6,6 +6,7 @@ import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
+import com.atguigu.daijia.common.util.LocationUtil;
 import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
 import com.atguigu.daijia.map.repository.OrderServiceLocationRepository;
 import com.atguigu.daijia.map.service.LocationService;
@@ -18,6 +19,7 @@ import com.atguigu.daijia.model.form.map.UpdateOrderLocationForm;
 import com.atguigu.daijia.model.vo.map.NearByDriverVo;
 import com.atguigu.daijia.model.vo.map.OrderLocationVo;
 import com.atguigu.daijia.model.vo.map.OrderServiceLastLocationVo;
+import com.atguigu.daijia.order.client.OrderInfoFeignClient;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -55,6 +57,9 @@ public class LocationServiceImpl implements LocationService {
 
     @Resource
     private MongoTemplate mongoTemplate;
+
+    @Resource
+    private OrderInfoFeignClient orderInfoFeignClient;
 
     @Override
     public Boolean updateDriverLocation(UpdateDriverLocationForm updateDriverLocationForm) {
@@ -173,6 +178,34 @@ public class LocationServiceImpl implements LocationService {
             BeanUtils.copyProperties(orderServiceLocation, orderServiceLastLocationVo);
         }
         return orderServiceLastLocationVo;
+    }
+
+    @Override
+    public BigDecimal calculateOrderRealDistance(Long orderId) {
+        // 1.根据订单id获取订单服务位置信息，根据创建时间升序排列
+        List<OrderServiceLocation> list = orderServiceLocationRepository.findAllByOrderIdOrderByCreateTimeAsc(orderId);
+        // 2. 距离相加
+        BigDecimal totalDistance = BigDecimal.ZERO;
+        if (!CollectionUtils.isEmpty(list)) {
+            for (int i = 0; i < list.size() - 1; i++) {
+                OrderServiceLocation currentLocation = list.get(i);
+                OrderServiceLocation nextLocation = list.get(i + 1);
+                double distance = LocationUtil.getDistance(
+                        currentLocation.getLatitude().doubleValue(),
+                        currentLocation.getLongitude().doubleValue(),
+                        nextLocation.getLatitude().doubleValue(),
+                        nextLocation.getLongitude().doubleValue()
+                );
+                totalDistance = totalDistance.add(BigDecimal.valueOf(distance));
+            }
+        }
+
+        // FIXME: 为了测试，不好测试实际代驾距离，模拟数据  实际距离=预估距离+5公里
+        if(totalDistance.equals(BigDecimal.ZERO)) {
+            return orderInfoFeignClient.getOrderInfo(orderId).getData().getExpectDistance().add(new BigDecimal("5"));
+        }
+        // 3. 返回总距离
+        return totalDistance;
     }
 
 }

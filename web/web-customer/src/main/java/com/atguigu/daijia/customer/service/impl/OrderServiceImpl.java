@@ -172,7 +172,7 @@ public class OrderServiceImpl implements OrderService {
         if (!Objects.equals(orderInfo.getCustomerId(), customerId)) {
             throw new GuiguException(ResultCodeEnum.DATA_ERROR);
         }
-        Result<DriverInfoVo> result = driverInfoFeignClient.getDriverInfo(orderId);
+        Result<DriverInfoVo> result = driverInfoFeignClient.getDriverInfo(orderInfo.getDriverId());
 
         if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
             throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);

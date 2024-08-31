@@ -10,4 +10,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface CiFeignClient {
 
 
+    /**
+     * 文本审核
+     *
+     * @param content 文本内容
+     * @return 审核结果
+     */
+    @PostMapping("/ci/textAuditing")
+    Result<TextAuditingVo> textAuditing(@RequestBody String content);
 }

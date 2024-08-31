@@ -3,7 +3,7 @@ package com.atguigu.daijia.common.util;
 public class LocationUtil {
 
     // 地球赤道半径
-    private static double EARTH_RADIUS = 6378.137;
+    private static final double EARTH_RADIUS = 6378.137;
 
     //等同——Math.toRadians()
     private static double rad(double d) {
@@ -11,10 +11,14 @@ public class LocationUtil {
     }
 
     /**
-     * @描述 经纬度获取距离，单位为米
-     * @参数 [lat1, lng1, lat2, lng2]
-     * @返回值 double
-     **/
+     * 根据经纬度获取距离，单位为米
+     *
+     * @param lat1 地址1维度
+     * @param lng1 地址1经度
+     * @param lat2 地址2维度
+     * @param lng2 地址2经度
+     * @return 距离
+     */
     public static double getDistance(double lat1, double lng1, double lat2,
                                      double lng2) {
         double radLat1 = rad(lat1);

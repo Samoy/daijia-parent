@@ -2,6 +2,7 @@ package com.atguigu.daijia.order.client;
 
 import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.form.order.StartDriveForm;
+import com.atguigu.daijia.model.form.order.UpdateOrderBillForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderCartForm;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -102,5 +103,26 @@ public interface OrderInfoFeignClient {
      */
     @PostMapping("/order/info/startDrive")
     Result<Boolean> startDrive(@RequestBody StartDriveForm startDriveForm);
+
+    /**
+     * 获取一段时间订单数量
+     *
+     * @param driverId  司机id
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     * @return 订单数量
+     */
+    @GetMapping("/order/info/getOrderNumByTime/{driverId}/{startTime}/{endTime}")
+    Result<Long> getOrderNumByTime(@PathVariable Long driverId, @PathVariable String startTime, @PathVariable String endTime);
+
+
+    /**
+     * 结束代驾：服务更新订单账单
+     *
+     * @param updateOrderBillForm 更新订单账单表单
+     * @return 是否成功
+     */
+    @PostMapping("/order/info/endDrive")
+    Result<Boolean> endDrive(@RequestBody UpdateOrderBillForm updateOrderBillForm);
 
 }
