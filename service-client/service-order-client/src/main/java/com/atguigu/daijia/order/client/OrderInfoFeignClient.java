@@ -4,7 +4,9 @@ import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.form.order.StartDriveForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderBillForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderCartForm;
+import com.atguigu.daijia.model.vo.base.PageVo;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
+import com.atguigu.daijia.model.vo.order.OrderListVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.model.form.order.OrderInfoForm;
@@ -124,5 +126,19 @@ public interface OrderInfoFeignClient {
      */
     @PostMapping("/order/info/endDrive")
     Result<Boolean> endDrive(@RequestBody UpdateOrderBillForm updateOrderBillForm);
+
+
+    /**
+     * 获取乘客订单分页列表
+     *
+     * @param customerId 客户id
+     * @param page       当前页面
+     * @param limit      每页记录数
+     * @return 分页列表
+     */
+    @GetMapping("/order/info/findCustomerOrderPage/{customerId}/{page}/{limit}")
+    Result<PageVo<OrderListVo>> findCustomerOrderPage(@PathVariable("customerId") Long customerId,
+                                                      @PathVariable("page") Long page,
+                                                      @PathVariable("limit") Long limit);
 
 }

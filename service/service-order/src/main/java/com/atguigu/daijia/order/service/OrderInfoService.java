@@ -5,7 +5,11 @@ import com.atguigu.daijia.model.form.order.OrderInfoForm;
 import com.atguigu.daijia.model.form.order.StartDriveForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderBillForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderCartForm;
+import com.atguigu.daijia.model.vo.base.PageVo;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
+import com.atguigu.daijia.model.vo.order.OrderInfoVo;
+import com.atguigu.daijia.model.vo.order.OrderListVo;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface OrderInfoService extends IService<OrderInfo> {
@@ -29,4 +33,9 @@ public interface OrderInfoService extends IService<OrderInfo> {
     Long getOrderNumByTime(Long driverId, String startTime, String endTime);
 
     Boolean endDrive(UpdateOrderBillForm updateOrderBillForm);
+
+    //获取乘客订单分页列表
+    PageVo<OrderListVo> findCustomerOrderPage(Page<OrderInfo> pageParam, Long customerId);
+
+    PageVo<OrderListVo> findDriverOrderPage(Page<OrderInfo> pageParam, Long driverId);
 }
