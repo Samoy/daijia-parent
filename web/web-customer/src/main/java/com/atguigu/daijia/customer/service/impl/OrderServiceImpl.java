@@ -3,17 +3,22 @@ package com.atguigu.daijia.customer.service.impl;
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
+import com.atguigu.daijia.customer.client.CustomerInfoFeignClient;
 import com.atguigu.daijia.customer.service.OrderService;
 import com.atguigu.daijia.dispatch.client.NewOrderFeignClient;
 import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
 import com.atguigu.daijia.map.client.LocationFeignClient;
 import com.atguigu.daijia.map.client.MapFeignClient;
+import com.atguigu.daijia.map.client.WxPayFeignClient;
 import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.enums.OrderStatus;
+import com.atguigu.daijia.model.enums.PayWay;
 import com.atguigu.daijia.model.form.customer.ExpectOrderForm;
 import com.atguigu.daijia.model.form.customer.SubmitOrderForm;
 import com.atguigu.daijia.model.form.map.CalculateDrivingLineForm;
 import com.atguigu.daijia.model.form.order.OrderInfoForm;
+import com.atguigu.daijia.model.form.payment.CreateWxPaymentForm;
+import com.atguigu.daijia.model.form.payment.PaymentInfoForm;
 import com.atguigu.daijia.model.form.rules.FeeRuleRequestForm;
 import com.atguigu.daijia.model.vo.base.PageVo;
 import com.atguigu.daijia.model.vo.customer.ExpectOrderVo;
@@ -22,10 +27,8 @@ import com.atguigu.daijia.model.vo.driver.DriverInfoVo;
 import com.atguigu.daijia.model.vo.map.DrivingLineVo;
 import com.atguigu.daijia.model.vo.map.OrderLocationVo;
 import com.atguigu.daijia.model.vo.map.OrderServiceLastLocationVo;
-import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
-import com.atguigu.daijia.model.vo.order.OrderBillVo;
-import com.atguigu.daijia.model.vo.order.OrderInfoVo;
-import com.atguigu.daijia.model.vo.order.OrderListVo;
+import com.atguigu.daijia.model.vo.order.*;
+import com.atguigu.daijia.model.vo.payment.WxPrepayVo;
 import com.atguigu.daijia.model.vo.rules.FeeRuleResponseVo;
 import com.atguigu.daijia.order.client.OrderInfoFeignClient;
 import com.atguigu.daijia.rules.client.FeeRuleFeignClient;
@@ -55,6 +58,11 @@ public class OrderServiceImpl implements OrderService {
     private DriverInfoFeignClient driverInfoFeignClient;
     @Resource
     private LocationFeignClient locationFeignClient;
+    @Resource
+    private CustomerInfoFeignClient customerInfoFeignClient;
+
+    @Resource
+    private WxPayFeignClient wxPayFeignClient;
 
     @Override
     public ExpectOrderVo expectOrder(ExpectOrderForm expectOrderForm) {
@@ -241,5 +249,50 @@ public class OrderServiceImpl implements OrderService {
         return result.getData();
     }
 
+    @Override
+    public WxPrepayVo createWxPayment(CreateWxPaymentForm createWxPaymentForm) {
+        // 获取订单支付信息
+        Result<OrderPayVo> orderPayVoResult = orderInfoFeignClient.getOrderPayVo(createWxPaymentForm.getOrderNo(), createWxPaymentForm.getCustomerId());
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(orderPayVoResult.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        OrderPayVo orderPayVo = orderPayVoResult.getData();
+        if (!Objects.equals(orderPayVo.getStatus(), OrderStatus.UNPAID.getStatus())) {
+            throw new GuiguException(ResultCodeEnum.ILLEGAL_REQUEST);
+        }
+        // 获取乘客和司机openId
+        Result<String> customerOpenIdResult = customerInfoFeignClient.getCustomerOpenId(orderPayVo.getCustomerId());
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(customerOpenIdResult.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        String customerOpenId = customerOpenIdResult.getData();
+        Result<String> driverOpenIdResult = driverInfoFeignClient.getDriverOpenId(orderPayVo.getDriverId());
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(driverOpenIdResult.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        String driverOpenId = driverOpenIdResult.getData();
+        // 发起微信支付
+        PaymentInfoForm paymentInfoForm = new PaymentInfoForm();
+        paymentInfoForm.setCustomerOpenId(customerOpenId);
+        paymentInfoForm.setDriverOpenId(driverOpenId);
+        paymentInfoForm.setAmount(orderPayVo.getPayAmount());
+        paymentInfoForm.setContent(orderPayVo.getContent());
+        paymentInfoForm.setOrderNo(orderPayVo.getOrderNo());
+        paymentInfoForm.setPayWay(PayWay.WECHAT.getCode());
+        Result<WxPrepayVo> wxPaymentResult = wxPayFeignClient.createWxPayment(paymentInfoForm);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(wxPaymentResult.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        return wxPaymentResult.getData();
+    }
+
+    @Override
+    public Boolean queryPayStatus(String orderNo) {
+        Result<Boolean> result = wxPayFeignClient.queryPayStatus(orderNo);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        return result.getData();
+    }
 
 }

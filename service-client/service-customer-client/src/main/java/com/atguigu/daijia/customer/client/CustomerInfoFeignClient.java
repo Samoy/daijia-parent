@@ -19,4 +19,16 @@ public interface CustomerInfoFeignClient {
 
     @PostMapping("/customer/info/updateWxPhoneNumber")
     Result<Boolean> updateWxPhoneNumber(@RequestBody UpdateWxPhoneForm updateWxPhoneForm);
+
+
+    /**
+     * 获取客户OpenId
+     *
+     * @param customerId 客户id
+     * @return openId
+     */
+    @GetMapping("/customer/info/getCustomerOpenId/{customerId}")
+    Result<String> getCustomerOpenId(@PathVariable("customerId") Long customerId);
+
+
 }

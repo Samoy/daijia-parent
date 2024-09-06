@@ -262,6 +262,15 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         return driverInfoVo;
     }
 
+    @Override
+    public String getDriverOpenId(Long driverId) {
+        LambdaQueryWrapper<DriverInfo> wrapper = new LambdaQueryWrapper<DriverInfo>()
+                .eq(DriverInfo::getId, driverId)
+                .select(DriverInfo::getWxOpenId);
+        DriverInfo driverInfo = this.getOne(wrapper);
+        return driverInfo.getWxOpenId();
+    }
+
     private @NotNull IaiClient createIaiClient() {
         Credential cred = new Credential(tencentCloudProperties.getSecretId(),
                 tencentCloudProperties.getSecretKey());

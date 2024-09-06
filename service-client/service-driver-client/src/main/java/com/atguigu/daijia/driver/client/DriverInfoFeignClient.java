@@ -115,4 +115,14 @@ public interface DriverInfoFeignClient {
      */
     @GetMapping("/driver/info/getDriverInfo/{driverId}")
     Result<DriverInfoVo> getDriverInfo(@PathVariable("driverId") Long driverId);
+
+
+    /**
+     * 获取司机OpenId
+     *
+     * @param driverId 司机id
+     * @return 司机openId
+     */
+    @GetMapping("/driver/info/getDriverOpenId/{driverId}")
+    Result<String> getDriverOpenId(@PathVariable("driverId") Long driverId);
 }
