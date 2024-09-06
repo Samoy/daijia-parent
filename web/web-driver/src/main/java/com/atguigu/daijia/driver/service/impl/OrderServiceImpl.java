@@ -10,6 +10,7 @@ import com.atguigu.daijia.driver.service.OrderService;
 import com.atguigu.daijia.map.client.LocationFeignClient;
 import com.atguigu.daijia.map.client.MapFeignClient;
 import com.atguigu.daijia.model.entity.order.OrderInfo;
+import com.atguigu.daijia.model.enums.OrderStatus;
 import com.atguigu.daijia.model.form.map.CalculateDrivingLineForm;
 import com.atguigu.daijia.model.form.order.OrderFeeForm;
 import com.atguigu.daijia.model.form.order.StartDriveForm;
@@ -18,12 +19,11 @@ import com.atguigu.daijia.model.form.order.UpdateOrderCartForm;
 import com.atguigu.daijia.model.form.rules.FeeRuleRequestForm;
 import com.atguigu.daijia.model.form.rules.ProfitsharingRuleRequestForm;
 import com.atguigu.daijia.model.form.rules.RewardRuleRequestForm;
+import com.atguigu.daijia.model.vo.base.PageVo;
 import com.atguigu.daijia.model.vo.map.DrivingLineVo;
 import com.atguigu.daijia.model.vo.map.OrderLocationVo;
 import com.atguigu.daijia.model.vo.map.OrderServiceLastLocationVo;
-import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
-import com.atguigu.daijia.model.vo.order.NewOrderDataVo;
-import com.atguigu.daijia.model.vo.order.OrderInfoVo;
+import com.atguigu.daijia.model.vo.order.*;
 import com.atguigu.daijia.model.vo.rules.FeeRuleResponseVo;
 import com.atguigu.daijia.model.vo.rules.ProfitsharingRuleResponseVo;
 import com.atguigu.daijia.model.vo.rules.RewardRuleResponseVo;
@@ -115,10 +115,27 @@ public class OrderServiceImpl implements OrderService {
         if (!Objects.equals(orderInfo.getDriverId(), driverId)) {
             throw new GuiguException(ResultCodeEnum.ILLEGAL_REQUEST);
         }
+        // 获取账单和分账数据
+        OrderBillVo orderBillVo = null;
+        OrderProfitsharingVo orderProfitsharingVo = null;
+        if (orderInfo.getStatus() >= OrderStatus.END_SERVICE.getStatus()) {
+            Result<OrderBillVo> orderBillInfoResult = orderInfoFeignClient.getOrderBillInfo(orderId);
+            if (!ResultCodeEnum.SUCCESS.getCode().equals(orderBillInfoResult.getCode())) {
+                throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+            }
+            orderBillVo = orderBillInfoResult.getData();
+            Result<OrderProfitsharingVo> orderProfitsharingResult = orderInfoFeignClient.getOrderProfitsharing(orderId);
+            if (!ResultCodeEnum.SUCCESS.getCode().equals(orderProfitsharingResult.getCode())) {
+                throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+            }
+            orderProfitsharingVo = orderProfitsharingResult.getData();
+        }
 
         OrderInfoVo orderInfoVo = new OrderInfoVo();
         BeanUtils.copyProperties(orderInfo, orderInfoVo);
         orderInfoVo.setOrderId(orderId);
+        orderInfoVo.setOrderBillVo(orderBillVo);
+        orderInfoVo.setOrderProfitsharingVo(orderProfitsharingVo);
         return orderInfoVo;
     }
 
@@ -417,5 +434,23 @@ public class OrderServiceImpl implements OrderService {
             throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
         }
         return endResult.getData();
+    }
+
+    @Override
+    public PageVo<OrderListVo> findDriverOrderPage(Long driverId, Long page, Long limit) {
+        Result<PageVo<OrderListVo>> result = orderInfoFeignClient.findDriverOrderPage(driverId, page, limit);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        return result.getData();
+    }
+
+    @Override
+    public Boolean sendOrderBillInfo(Long orderId, Long driverId) {
+        Result<Boolean> result = orderInfoFeignClient.sendOrderBillInfo(orderId, driverId);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        return result.getData();
     }
 }
