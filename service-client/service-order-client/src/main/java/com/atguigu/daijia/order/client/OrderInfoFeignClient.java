@@ -194,4 +194,24 @@ public interface OrderInfoFeignClient {
     @GetMapping("/order/info/getOrderPayVo/{orderNo}/{customerId}")
     Result<OrderPayVo> getOrderPayVo(@PathVariable("orderNo") String orderNo, @PathVariable("customerId") Long customerId);
 
+    /**
+     * 更改订单支付状态
+     *
+     * @param orderNo 订单号
+     * @return 是否成功
+     */
+    @GetMapping("/order/info//updateOrderPayStatus/{orderNo}")
+    Result<Boolean> updateOrderPayStatus(@PathVariable("orderNo") String orderNo);
+
+
+    /**
+     * 获取订单的系统奖励
+     *
+     * @param orderNo 订单号
+     * @return 系统奖励
+     */
+    @GetMapping("/order/info/getOrderRewardFee/{orderNo}")
+    Result<OrderRewardVo> getOrderRewardFee(@PathVariable("orderNo") String orderNo);
+
+
 }

@@ -39,6 +39,8 @@ services:
       MODE: standalone
       PREFER_HOST_MODE: hostname
       SPRING_DATASOURCE_PLATFORM: derby
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8848/nacos/actuator/health" ]
   minio:
     networks:
       - my_network
@@ -59,3 +61,20 @@ services:
     container_name: mongo
     ports:
       - "27017:27017"
+  seata:
+    networks:
+      - my_network
+    image: m.daocloud.io/docker.io/seataio/seata-server:2.0.0
+    container_name: seata-server
+    ports:
+      - "8091:8091"
+      - "7091:7091"
+    depends_on:
+      nacos:
+        condition: service_healthy
+    environment:
+      - SEATA_IP=127.0.0.1
+    volumes:
+      - "/usr/share/zoneinfo/Asia/Shanghai:/etc/localtime"
+      - "/usr/share/zoneinfo/Asia/Shanghai:/etc/timezone"
+      - "./seata/resources:/seata-server/resources"

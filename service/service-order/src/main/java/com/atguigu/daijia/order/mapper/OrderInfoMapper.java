@@ -15,5 +15,5 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
     IPage<OrderListVo> selectDriverOrderPage(Page<OrderInfo> pageParam, Long driverId);
 
-    OrderPayVo seleOrderPayVo(String orderNo, Long customerId);
+    OrderPayVo selectOrderPayVo(String orderNo, Long customerId);
 }

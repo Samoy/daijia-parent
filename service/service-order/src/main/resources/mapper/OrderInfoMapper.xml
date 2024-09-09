@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.atguigu.daijia.order.mapper.OrderInfoMapper">
     <!--    查询乘客订单分页-->
-    <select id="findCustomerOrderPage" resultType="com.atguigu.daijia.model.vo.order.OrderListVo">
+    <select id="selectCustomerOrderPage" resultType="com.atguigu.daijia.model.vo.order.OrderListVo">
         SELECT info.id,
                info.order_no,
                info.start_location,

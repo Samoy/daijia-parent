@@ -1,12 +1,21 @@
 package com.atguigu.daijia.payment.service.impl;
 
+import com.alibaba.fastjson2.JSON;
+import com.atguigu.daijia.common.constant.MqConst;
 import com.atguigu.daijia.common.execption.GuiguException;
+import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
+import com.atguigu.daijia.common.service.RabbitService;
 import com.atguigu.daijia.common.util.RequestUtils;
+import com.atguigu.daijia.driver.client.DriverAccountFeignClient;
 import com.atguigu.daijia.model.entity.payment.PaymentInfo;
 import com.atguigu.daijia.model.enums.PayStatus;
+import com.atguigu.daijia.model.enums.TradeType;
+import com.atguigu.daijia.model.form.driver.TransferForm;
 import com.atguigu.daijia.model.form.payment.PaymentInfoForm;
+import com.atguigu.daijia.model.vo.order.OrderRewardVo;
 import com.atguigu.daijia.model.vo.payment.WxPrepayVo;
+import com.atguigu.daijia.order.client.OrderInfoFeignClient;
 import com.atguigu.daijia.payment.config.WxPayV3Properties;
 import com.atguigu.daijia.payment.mapper.PaymentInfoMapper;
 import com.atguigu.daijia.payment.service.WxPayService;
@@ -24,6 +33,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Date;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -37,6 +48,15 @@ public class WxPayServiceImpl implements WxPayService {
 
     @Resource
     private WxPayV3Properties wxPayV3Properties;
+
+    @Resource
+    private RabbitService rabbitService;
+
+    @Resource
+    private OrderInfoFeignClient orderInfoFeignClient;
+
+    @Resource
+    private DriverAccountFeignClient driverAccountFeignClient;
 
     @Override
     public WxPrepayVo createWxPayment(PaymentInfoForm paymentInfoForm) {
@@ -143,14 +163,56 @@ public class WxPayServiceImpl implements WxPayService {
         //4.以支付通知回调为例，验签、解密并转换成 Transaction
         Transaction transaction = parser.parse(requestParam, Transaction.class);
 
-        if(null != transaction && transaction.getTradeState() == Transaction.TradeStateEnum.SUCCESS) {
+        if (null != transaction && transaction.getTradeState() == Transaction.TradeStateEnum.SUCCESS) {
             //5.处理支付业务
             this.handlePayment(transaction);
         }
     }
 
+    @Override
+    public void handleOrder(String orderNo) {
+        // 远程调用：更新订单状态
+        Result<Boolean> updateOrderPayStatusResult = orderInfoFeignClient.updateOrderPayStatus(orderNo);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(updateOrderPayStatusResult.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        Result<OrderRewardVo> orderRewardFeeResult = orderInfoFeignClient.getOrderRewardFee(orderNo);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(orderRewardFeeResult.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        OrderRewardVo orderRewardVo = orderRewardFeeResult.getData();
+        if (orderRewardVo != null && orderRewardVo.getRewardFee().compareTo(BigDecimal.ZERO) > 0) {
+            TransferForm transferForm = new TransferForm();
+            transferForm.setTradeNo(orderNo);
+            transferForm.setTradeType(TradeType.REWARD.getType());
+            transferForm.setContent(TradeType.REWARD.getContent());
+            transferForm.setAmount(orderRewardVo.getRewardFee());
+            transferForm.setDriverId(orderRewardVo.getDriverId());
+            Result<Boolean> transferResult = driverAccountFeignClient.transfer(transferForm);
+            if (!ResultCodeEnum.SUCCESS.getCode().equals(transferResult.getCode())) {
+                throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+            }
+        }
+        // 远程调用：获取系统奖励
+    }
+
     //如果支付成功，调用其他方法实现支付后处理逻辑
     private void handlePayment(Transaction transaction) {
-        log.info("支付成功，订单号：{}", transaction.getOutTradeNo());
+        String orderNo = transaction.getOutTradeNo();
+        log.info("支付成功，订单号：{}", orderNo);
+        PaymentInfo paymentInfo = paymentInfoMapper.selectOne(new LambdaQueryWrapper<PaymentInfo>()
+                .eq(PaymentInfo::getOrderNo, orderNo));
+        if (Objects.equals(paymentInfo.getPaymentStatus(), PayStatus.PAYED.getStatus())) {
+            return;
+        }
+        paymentInfo.setPaymentStatus(PayStatus.PAYED.getStatus());
+        paymentInfo.setTransactionId(transaction.getTransactionId());
+        paymentInfo.setOrderNo(orderNo);
+        paymentInfo.setCallbackTime(new Date());
+        paymentInfo.setCallbackContent(JSON.toJSONString(transaction));
+        paymentInfoMapper.updateById(paymentInfo);
+
+        // 发送消息
+        rabbitService.sendMessage(MqConst.EXCHANGE_ORDER, MqConst.ROUTING_PAY_SUCCESS, orderNo);
     }
 }
