@@ -48,4 +48,6 @@ public interface OrderInfoService extends IService<OrderInfo> {
     Boolean updateOrderPayStatus(Long orderNo);
 
     OrderRewardVo getOrderRewardFee(String orderNo);
+
+    void cancelOrder(Long orderId);
 }

@@ -1,6 +1,7 @@
 package com.atguigu.daijia.order.service.impl;
 
 import com.atguigu.daijia.common.constant.RedisConstant;
+import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.model.entity.order.*;
@@ -23,6 +24,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import org.redisson.api.RBoundedBlockingQueue;
+import org.redisson.api.RDelayedQueue;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -69,6 +72,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         // 订单状态
         orderInfo.setStatus(OrderStatus.WAITING_ACCEPT.getStatus());
         orderInfoMapper.insert(orderInfo);
+        // 发送延迟消息
+        this.sendDelayMessage(orderInfo.getId());
         // 订单状态日志
         log(orderInfo.getId(), orderInfo.getStatus());
 
@@ -77,6 +82,16 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 RedisConstant.ORDER_ACCEPT_MARK_EXPIRES_TIME, TimeUnit.MINUTES);
 
         return orderInfo.getId();
+    }
+
+    private void sendDelayMessage(Long id) {
+        try {
+            RBoundedBlockingQueue<Object> blockingQueue = redissonClient.getBoundedBlockingQueue(SystemConstant.QUEUE_CANCEL_ORDER);
+            RDelayedQueue<Object> delayedQueue = redissonClient.getDelayedQueue(blockingQueue);
+            delayedQueue.offer(id, SystemConstant.QUEUE_CANCEL_ORDER_DELAY_TIME, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+        }
     }
 
     @Override
@@ -397,6 +412,19 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         orderRewardVo.setDriverId(orderInfo.getDriverId());
         orderRewardVo.setRewardFee(orderBill.getRewardFee());
         return orderRewardVo;
+    }
+
+    @Override
+    public void cancelOrder(Long orderId) {
+        OrderInfo orderInfo = this.getById(orderId);
+        if (Objects.equals(orderInfo.getStatus(), OrderStatus.WAITING_ACCEPT.getStatus())) {
+            orderInfo.setStatus(OrderStatus.CANCEL_ORDER.getStatus());
+            int rows = orderInfoMapper.updateById(orderInfo);
+            if (rows == 1) {
+                // 删除接单标识
+                redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
+            }
+        }
     }
 
 
