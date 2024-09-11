@@ -33,6 +33,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
@@ -425,6 +426,11 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
             }
         }
+    }
+
+    @Override
+    public Boolean updateCouponAmount(Long orderId, BigDecimal couponAmount) {
+       return orderBillMapper.updateCouponAmount(orderId,couponAmount) > 0;
     }
 
 

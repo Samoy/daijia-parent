@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
+
 
 @FeignClient(value = "service-order")
 public interface OrderInfoFeignClient {
@@ -213,5 +215,14 @@ public interface OrderInfoFeignClient {
     @GetMapping("/order/info/getOrderRewardFee/{orderNo}")
     Result<OrderRewardVo> getOrderRewardFee(@PathVariable("orderNo") String orderNo);
 
+    /**
+     * 更新优惠券金额
+     *
+     * @param orderId      订单id
+     * @param couponAmount 优惠券金额
+     * @return 是否成功
+     */
+    @GetMapping("/order/info/updateCouponAmount/{orderId}/{couponAmount}")
+    Result<Boolean> updateCouponAmount(@PathVariable Long orderId, @PathVariable BigDecimal couponAmount);
 
 }

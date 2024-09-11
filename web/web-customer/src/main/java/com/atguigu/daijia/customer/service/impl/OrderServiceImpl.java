@@ -3,6 +3,7 @@ package com.atguigu.daijia.customer.service.impl;
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
+import com.atguigu.daijia.coupon.client.CouponFeignClient;
 import com.atguigu.daijia.customer.client.CustomerInfoFeignClient;
 import com.atguigu.daijia.customer.service.OrderService;
 import com.atguigu.daijia.dispatch.client.NewOrderFeignClient;
@@ -13,6 +14,7 @@ import com.atguigu.daijia.map.client.WxPayFeignClient;
 import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.enums.OrderStatus;
 import com.atguigu.daijia.model.enums.PayWay;
+import com.atguigu.daijia.model.form.coupon.UseCouponForm;
 import com.atguigu.daijia.model.form.customer.ExpectOrderForm;
 import com.atguigu.daijia.model.form.customer.SubmitOrderForm;
 import com.atguigu.daijia.model.form.map.CalculateDrivingLineForm;
@@ -38,6 +40,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Objects;
 
@@ -63,6 +66,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Resource
     private WxPayFeignClient wxPayFeignClient;
+
+    @Resource
+    private CouponFeignClient couponFeignClient;
 
     @Override
     public ExpectOrderVo expectOrder(ExpectOrderForm expectOrderForm) {
@@ -271,11 +277,36 @@ public class OrderServiceImpl implements OrderService {
             throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
         }
         String driverOpenId = driverOpenIdResult.getData();
+        // 处理优惠券
+        BigDecimal couponAmount = null;
+        if (null == orderPayVo.getCouponAmount()
+                && null != createWxPaymentForm.getCustomerCouponId()
+                && createWxPaymentForm.getCustomerCouponId() != 0) {
+            UseCouponForm useCouponForm = new UseCouponForm();
+            useCouponForm.setCustomerCouponId(createWxPaymentForm.getCustomerCouponId());
+            useCouponForm.setOrderId(orderPayVo.getOrderId());
+            useCouponForm.setCustomerId(createWxPaymentForm.getCustomerId());
+            useCouponForm.setOrderAmount(orderPayVo.getPayAmount());
+            Result<BigDecimal> useCouponResult = couponFeignClient.useCoupon(useCouponForm);
+            if (!ResultCodeEnum.SUCCESS.getCode().equals(useCouponResult.getCode())) {
+                throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+            }
+            couponAmount = useCouponResult.getData();
+        }
+        BigDecimal payAmount = orderPayVo.getPayAmount();
+        if (couponAmount != null && couponAmount.compareTo(BigDecimal.ZERO) != 0) {
+            Result<Boolean> updateCouponAmountResult = orderInfoFeignClient.updateCouponAmount(orderPayVo.getOrderId(), couponAmount);
+            if (!ResultCodeEnum.SUCCESS.getCode().equals(updateCouponAmountResult.getCode())) {
+                throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+            }
+            payAmount = payAmount.subtract(couponAmount);
+        }
+
         // 发起微信支付
         PaymentInfoForm paymentInfoForm = new PaymentInfoForm();
         paymentInfoForm.setCustomerOpenId(customerOpenId);
         paymentInfoForm.setDriverOpenId(driverOpenId);
-        paymentInfoForm.setAmount(orderPayVo.getPayAmount());
+        paymentInfoForm.setAmount(payAmount);
         paymentInfoForm.setContent(orderPayVo.getContent());
         paymentInfoForm.setOrderNo(orderPayVo.getOrderNo());
         paymentInfoForm.setPayWay(PayWay.WECHAT.getCode());

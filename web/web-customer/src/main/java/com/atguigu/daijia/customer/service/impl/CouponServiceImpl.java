@@ -10,11 +10,12 @@ import com.atguigu.daijia.model.vo.coupon.AvailableCouponVo;
 import com.atguigu.daijia.model.vo.coupon.NoReceiveCouponVo;
 import com.atguigu.daijia.model.vo.coupon.NoUseCouponVo;
 import com.atguigu.daijia.model.vo.coupon.UsedCouponVo;
+import com.atguigu.daijia.model.vo.order.OrderBillVo;
+import com.atguigu.daijia.order.client.OrderInfoFeignClient;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Slf4j
@@ -23,6 +24,9 @@ public class CouponServiceImpl implements CouponService {
 
     @Resource
     private CouponFeignClient couponFeignClient;
+
+    @Resource
+    private OrderInfoFeignClient orderInfoFeignClient;
 
     @Override
     public PageVo<NoReceiveCouponVo> findNoReceivePage(Long customerId, Long page, Long limit) {
@@ -53,7 +57,12 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public List<AvailableCouponVo> findAvailableCoupon(Long customerId, Long orderId) {
-        Result<List<AvailableCouponVo>> result = couponFeignClient.findAvailableCoupon(customerId, BigDecimal.valueOf(orderId));
+        Result<OrderBillVo> orderBillInfoResult = orderInfoFeignClient.getOrderBillInfo(orderId);
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(orderBillInfoResult.getCode())) {
+            throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
+        }
+        OrderBillVo orderBillVo = orderBillInfoResult.getData();
+        Result<List<AvailableCouponVo>> result = couponFeignClient.findAvailableCoupon(customerId, orderBillVo.getPayAmount());
         if (!ResultCodeEnum.SUCCESS.getCode().equals(result.getCode())) {
             throw new GuiguException(ResultCodeEnum.FEIGN_FAIL);
         }
